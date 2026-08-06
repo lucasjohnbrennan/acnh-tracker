@@ -17,6 +17,10 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Matches the "deploy" job below — the Firebase secrets were added as
+    # environment secrets on github-pages, which only jobs pinned to that
+    # environment can read.
+    environment: github-pages
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
