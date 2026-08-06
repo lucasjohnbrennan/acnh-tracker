@@ -10,8 +10,7 @@ import {
 } from 'firebase/auth'
 import { auth, firebaseConfigured } from '../lib/firebase'
 
-const NOT_CONFIGURED_MESSAGE =
-  'Firebase is not configured yet. Copy .env.example to .env and fill in your project credentials.'
+const NOT_CONFIGURED_MESSAGE = 'Firebase not configured'
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(null)
