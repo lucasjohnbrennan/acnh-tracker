@@ -38,6 +38,32 @@ Restart `npm run dev` after creating/editing `.env` (Vite only reads it at serve
 Each signed-in user's caught collectibles are stored at `users/{uid}` as a
 `caughtIds` string array, kept in sync live via a Firestore listener.
 
+## Deploying to GitHub Pages (free)
+
+Already wired up via [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) —
+every push to `main` builds the app and publishes it to
+`https://<your-username>.github.io/acnh-tracker/`. One-time setup:
+
+1. **Settings > Pages** → set **Source** to **GitHub Actions**.
+2. **Settings > Secrets and variables > Actions** → add a repository secret for
+   each value in your `.env` file (`VITE_FIREBASE_API_KEY`,
+   `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`,
+   `VITE_FIREBASE_STORAGE_BUCKET`, `VITE_FIREBASE_MESSAGING_SENDER_ID`,
+   `VITE_FIREBASE_APP_ID`) — the workflow injects them at build time since
+   `.env` itself isn't committed.
+3. In the Firebase console, **Authentication > Settings > Authorized domains**
+   → add `<your-username>.github.io` (required for sign-in to work once the
+   site isn't on `localhost`).
+4. Push to `main`. Check the **Actions** tab for build/deploy progress; the
+   Pages URL appears in the deploy job once it finishes.
+
+Two build details that make a Vite SPA work on Pages: `vite.config.js` sets
+`base: '/acnh-tracker/'` for production builds (Pages serves the repo under
+that subpath, not domain root), and a `postbuild` script copies `index.html`
+to `404.html` so that direct links/refreshes on client-side routes (like
+`/browse`) don't 404 — GitHub Pages serves `404.html` for any unmatched path,
+which just re-boots the app and lets vue-router take over.
+
 ## The master collectibles data
 
 `src/data/collectibles.json` is the single source of truth for every bug,
