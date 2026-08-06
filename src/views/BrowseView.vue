@@ -1,12 +1,16 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { useCollectiblesStore } from '../stores/collectibles'
+import { useHemisphereStore } from '../stores/hemisphere'
+import { MONTH_NAMES } from '../lib/time'
 import CollectibleCard from '../components/CollectibleCard.vue'
 
 const collectiblesStore = useCollectiblesStore()
+const hemisphereStore = useHemisphereStore()
 
 const search = ref('')
 const category = ref('all')
+const month = ref('all') // 'all' or 1-12
 const hideCaught = ref(false)
 
 const CATEGORIES = [
@@ -16,12 +20,21 @@ const CATEGORIES = [
   { value: 'sea', label: '🦀 Sea Creatures' },
 ]
 
+const MONTH_OPTIONS = [
+  { value: 'all', label: 'All months' },
+  ...MONTH_NAMES.map((name, idx) => ({ value: idx + 1, label: name })),
+]
+
 const filtered = computed(() => {
   const query = search.value.trim().toLowerCase()
   return collectiblesStore.all.filter((c) => {
     if (category.value !== 'all' && c.category !== category.value) return false
     if (hideCaught.value && collectiblesStore.caughtIds.has(c.id)) return false
     if (query && !c.name.toLowerCase().includes(query)) return false
+    if (month.value !== 'all') {
+      const windows = c.availability[hemisphereStore.hemisphere][month.value - 1]
+      if (windows.length === 0) return false
+    }
     return true
   })
 })
@@ -51,6 +64,13 @@ const filtered = computed(() => {
           {{ opt.label }}
         </button>
       </div>
+
+      <select
+        v-model="month"
+        class="rounded-md border border-stone-300 px-3 py-1.5 text-sm dark:border-stone-700 dark:bg-stone-900"
+      >
+        <option v-for="opt in MONTH_OPTIONS" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+      </select>
 
       <label class="ml-auto flex items-center gap-2 text-sm text-stone-600 dark:text-stone-300">
         <input v-model="hideCaught" type="checkbox" class="rounded" />
