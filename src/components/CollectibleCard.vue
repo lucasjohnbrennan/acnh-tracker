@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useCollectiblesStore } from '../stores/collectibles'
 import { useAuthStore } from '../stores/auth'
 import { useHemisphereStore } from '../stores/hemisphere'
@@ -22,6 +22,7 @@ const CATEGORY_META = {
 }
 
 const meta = computed(() => CATEGORY_META[props.collectible.category])
+const imgFailed = ref(false)
 const isCaught = computed(() => collectiblesStore.caughtIds.has(props.collectible.id))
 const monthlyWindows = computed(() => props.collectible.availability[hemisphereStore.hemisphere])
 const availableMonths = computed(() => monthlyWindows.value.map((w) => w.length > 0))
@@ -47,13 +48,27 @@ async function handleToggle() {
       : 'border-stone-200 bg-white dark:border-stone-800 dark:bg-stone-900'"
   >
     <div class="flex items-start justify-between gap-2">
-      <div>
-        <p class="font-semibold text-stone-900 dark:text-white">
-          <span aria-hidden="true">{{ meta.icon }}</span> {{ collectible.name }}
-        </p>
-        <p class="text-xs text-stone-500 dark:text-stone-400">
-          {{ meta.label }} · {{ collectible.location }}<span v-if="collectible.price"> · {{ collectible.price.toLocaleString() }} bells</span><span v-if="collectible.shadowSize"> · Shadow: {{ collectible.shadowSize }}</span>
-        </p>
+      <div class="flex items-start gap-3">
+        <img
+          v-if="collectible.iconUrl && !imgFailed"
+          :src="collectible.iconUrl"
+          :alt="collectible.name"
+          loading="lazy"
+          class="h-11 w-11 shrink-0 object-contain"
+          @error="imgFailed = true"
+        />
+        <span
+          v-else
+          class="flex h-11 w-11 shrink-0 items-center justify-center text-2xl"
+          aria-hidden="true"
+        >{{ meta.icon }}</span>
+
+        <div>
+          <p class="font-semibold text-stone-900 dark:text-white">{{ collectible.name }}</p>
+          <p class="text-xs text-stone-500 dark:text-stone-400">
+            {{ meta.label }} · {{ collectible.location }}<span v-if="collectible.price"> · {{ collectible.price.toLocaleString() }} bells</span><span v-if="collectible.shadowSize"> · Shadow: {{ collectible.shadowSize }}</span>
+          </p>
+        </div>
       </div>
 
       <button

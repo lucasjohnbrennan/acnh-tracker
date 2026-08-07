@@ -77,6 +77,11 @@ npm run build:data
 This re-downloads the sheet as CSV and re-normalizes it — nothing in the app
 talks to Google Sheets at runtime.
 
+Each entry also gets an `iconUrl`, built from the sheet's "Icon Filename"
+column against `https://nh-cdn.catalogue.ac/MenuIcon/{filename}.png` — the
+same CDN the sheet's own `=IMAGE()` cells point to. `CollectibleCard` falls
+back to a category emoji if an icon ever 404s.
+
 ## How "best time to time-travel" is calculated
 
 `src/lib/time.js` builds a 12-month × 24-hour grid of how many species are
@@ -105,8 +110,9 @@ and Firestore stores each user's caught collectibles.
 
 ## Known limitations
 
-- No collectible artwork/icons — the source spreadsheet's image columns don't
-  export via CSV. Cards show a category emoji instead.
 - Best-time picks a single top window; it doesn't yet account for cases where
   a slightly-lower-count time might be more convenient (e.g. avoiding a
   wraparound-midnight window).
+- Icons are hotlinked from a third-party CDN (`nh-cdn.catalogue.ac`), not
+  self-hosted — if that CDN ever goes away, icons fall back to a category
+  emoji rather than breaking.

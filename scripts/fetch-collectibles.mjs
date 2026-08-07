@@ -12,6 +12,7 @@ import { fileURLToPath } from 'node:url'
 import Papa from 'papaparse'
 
 const SHEET_ID = '13d_LAJPlxMa_DubPTuirkIV4DERBMXbrWQsmSh8ReK4'
+const ICON_CDN_BASE = 'https://nh-cdn.catalogue.ac/MenuIcon'
 
 const TABS = [
   { category: 'bug', gid: '1444012947' },
@@ -100,6 +101,7 @@ function normalizeRow(row, category) {
     catchDifficulty: category === 'fish' ? (row['Catch Difficulty'] || null) : null,
     description: row.Description || null,
     catchPhrase: row['Catch phrase'] || null,
+    iconUrl: row['Icon Filename'] ? `${ICON_CDN_BASE}/${row['Icon Filename'].trim()}.png` : null,
     availability: {
       north: buildAvailability(row, 'NH'),
       south: buildAvailability(row, 'SH'),
