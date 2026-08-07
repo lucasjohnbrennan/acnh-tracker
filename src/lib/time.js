@@ -139,6 +139,17 @@ export function formatWindows(windows) {
     .join(' & ')
 }
 
+// Summarizes a species' full-year window list into one display string:
+// the common window if every month it's available shares the same one
+// (the normal case), "Hours vary by month" if not, or "Not available".
+export function summarizeYearWindows(monthlyWindows) {
+  const active = monthlyWindows.filter((w) => w.length > 0)
+  if (active.length === 0) return 'Not available'
+  const signatures = new Set(active.map((w) => JSON.stringify(w)))
+  if (signatures.size === 1) return formatWindows(active[0])
+  return 'Hours vary by month'
+}
+
 // Convenience: how many species (excluding excludeIds) are catchable right
 // now, for a given hemisphere + month + hour — used to show "currently
 // catchable" lists without recomputing the whole grid.

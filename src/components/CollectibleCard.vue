@@ -3,10 +3,12 @@ import { computed } from 'vue'
 import { useCollectiblesStore } from '../stores/collectibles'
 import { useAuthStore } from '../stores/auth'
 import { useHemisphereStore } from '../stores/hemisphere'
-import { formatWindows, MONTH_NAMES } from '../lib/time'
+import { formatWindows, summarizeYearWindows, MONTH_NAMES } from '../lib/time'
 
 const props = defineProps({
   collectible: { type: Object, required: true },
+  // 1-12, or null/undefined to show a full-year summary instead of one month.
+  filterMonth: { type: Number, default: null },
 })
 
 const collectiblesStore = useCollectiblesStore()
@@ -24,9 +26,12 @@ const isCaught = computed(() => collectiblesStore.caughtIds.has(props.collectibl
 const monthlyWindows = computed(() => props.collectible.availability[hemisphereStore.hemisphere])
 const availableMonths = computed(() => monthlyWindows.value.map((w) => w.length > 0))
 
-const now = new Date()
-const currentMonthIndex = now.getMonth()
-const currentMonthWindows = computed(() => monthlyWindows.value[currentMonthIndex])
+const timeLabel = computed(() => {
+  if (props.filterMonth) {
+    return `In ${MONTH_NAMES[props.filterMonth - 1]}: ${formatWindows(monthlyWindows.value[props.filterMonth - 1])}`
+  }
+  return summarizeYearWindows(monthlyWindows.value)
+})
 
 async function handleToggle() {
   if (!authStore.user) return
@@ -47,7 +52,7 @@ async function handleToggle() {
           <span aria-hidden="true">{{ meta.icon }}</span> {{ collectible.name }}
         </p>
         <p class="text-xs text-stone-500 dark:text-stone-400">
-          {{ meta.label }} · {{ collectible.location }}<span v-if="collectible.price"> · {{ collectible.price.toLocaleString() }} bells</span>
+          {{ meta.label }} · {{ collectible.location }}<span v-if="collectible.price"> · {{ collectible.price.toLocaleString() }} bells</span><span v-if="collectible.shadowSize"> · Shadow: {{ collectible.shadowSize }}</span>
         </p>
       </div>
 
@@ -65,9 +70,7 @@ async function handleToggle() {
       </button>
     </div>
 
-    <p class="text-sm text-stone-700 dark:text-stone-300">
-      This month ({{ MONTH_NAMES[currentMonthIndex] }}): {{ formatWindows(currentMonthWindows) }}
-    </p>
+    <p class="text-sm text-stone-700 dark:text-stone-300">{{ timeLabel }}</p>
 
     <div class="flex gap-0.5" :title="'Months available (' + hemisphereStore.hemisphere + 'ern hemisphere)'">
       <span
