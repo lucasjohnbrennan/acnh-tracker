@@ -22,6 +22,19 @@ export function isAvailable(collectible, hemisphere, month, hour) {
   return isHourInWindows(hour, windows)
 }
 
+// Whether [rangeStart, rangeEnd) overlaps any of the given windows at all —
+// rangeEnd < rangeStart means the query range itself wraps past midnight,
+// same convention as the windows it's compared against. Checked hour-by-hour
+// since ranges only ever span up to 24 hours.
+export function rangeOverlapsWindows(rangeStart, rangeEnd, windows) {
+  for (let h = 0; h < 24; h++) {
+    if (isHourInWindows(h, [{ start: rangeStart, end: rangeEnd }]) && isHourInWindows(h, windows)) {
+      return true
+    }
+  }
+  return false
+}
+
 // Builds a 12 (month) x 24 (hour) grid of { count, ids } for how many
 // collectibles (excluding excludeIds) are catchable at that moment.
 export function buildAvailabilityGrid(collectibles, hemisphere, excludeIds = new Set()) {

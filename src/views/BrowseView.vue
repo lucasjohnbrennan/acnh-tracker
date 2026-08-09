@@ -1,18 +1,16 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useCollectiblesStore } from '../stores/collectibles'
 import { useHemisphereStore } from '../stores/hemisphere'
-import { MONTH_NAMES, formatHour, isHourInWindows } from '../lib/time'
+import { useBrowseFiltersStore } from '../stores/browseFilters'
+import { MONTH_NAMES, formatHour, isHourInWindows, rangeOverlapsWindows } from '../lib/time'
 import CollectibleCard from '../components/CollectibleCard.vue'
 
 const collectiblesStore = useCollectiblesStore()
 const hemisphereStore = useHemisphereStore()
-
-const search = ref('')
-const category = ref('all')
-const month = ref('all') // 'all' or 1-12
-const hour = ref('all') // 'all' or 0-23
-const hideCaught = ref(true)
+const filtersStore = useBrowseFiltersStore()
+const { search, category, month, hourFrom, hourTo, hideCaught } = storeToRefs(filtersStore)
 
 const CATEGORIES = [
   { value: 'all', label: 'All' },
@@ -27,17 +25,23 @@ const MONTH_OPTIONS = [
 ]
 
 const HOUR_OPTIONS = [
-  { value: 'all', label: 'Any hour' },
+  { value: 'all', label: 'Any' },
   ...Array.from({ length: 24 }, (_, h) => ({ value: h, label: formatHour(h) })),
 ]
 
-// Whether a collectible is catchable at the selected hour: within the
+// Whether a collectible is catchable in the selected hour range: within the
 // selected month if one's chosen, otherwise in at least one month all year.
+// If only one of from/to is set, it's treated as a single-hour filter.
 function matchesHour(collectible) {
-  if (hour.value === 'all') return true
+  if (hourFrom.value === 'all' && hourTo.value === 'all') return true
   const monthly = collectible.availability[hemisphereStore.hemisphere]
   const monthsToCheck = month.value === 'all' ? monthly : [monthly[month.value - 1]]
-  return monthsToCheck.some((windows) => isHourInWindows(hour.value, windows))
+
+  if (hourFrom.value !== 'all' && hourTo.value !== 'all') {
+    return monthsToCheck.some((windows) => rangeOverlapsWindows(hourFrom.value, hourTo.value, windows))
+  }
+  const singleHour = hourFrom.value !== 'all' ? hourFrom.value : hourTo.value
+  return monthsToCheck.some((windows) => isHourInWindows(singleHour, windows))
 }
 
 const filtered = computed(() => {
@@ -88,12 +92,23 @@ const filtered = computed(() => {
         <option v-for="opt in MONTH_OPTIONS" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
       </select>
 
-      <select
-        v-model="hour"
-        class="rounded-md border border-stone-300 px-3 py-1.5 text-sm dark:border-stone-700 dark:bg-stone-900"
-      >
-        <option v-for="opt in HOUR_OPTIONS" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-      </select>
+      <div class="flex items-center gap-1.5 text-sm text-stone-600 dark:text-stone-300">
+        <select
+          v-model="hourFrom"
+          aria-label="From hour"
+          class="rounded-md border border-stone-300 px-3 py-1.5 text-sm dark:border-stone-700 dark:bg-stone-900"
+        >
+          <option v-for="opt in HOUR_OPTIONS" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+        </select>
+        <span>to</span>
+        <select
+          v-model="hourTo"
+          aria-label="To hour"
+          class="rounded-md border border-stone-300 px-3 py-1.5 text-sm dark:border-stone-700 dark:bg-stone-900"
+        >
+          <option v-for="opt in HOUR_OPTIONS" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+        </select>
+      </div>
 
       <label class="ml-auto flex items-center gap-2 text-sm text-stone-600 dark:text-stone-300">
         <input v-model="hideCaught" type="checkbox" class="rounded" />

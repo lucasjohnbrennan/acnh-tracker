@@ -1,12 +1,25 @@
 <script setup>
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useCollectiblesStore } from '../stores/collectibles'
 import { useAuthStore } from '../stores/auth'
+import { useBrowseFiltersStore } from '../stores/browseFilters'
 
 const collectiblesStore = useCollectiblesStore()
 const authStore = useAuthStore()
+const filtersStore = useBrowseFiltersStore()
+const router = useRouter()
 
 const best = computed(() => collectiblesStore.bestTime)
+
+function viewInBrowse() {
+  filtersStore.search = ''
+  filtersStore.category = 'all'
+  filtersStore.month = best.value.month
+  filtersStore.hourFrom = best.value.startHour
+  filtersStore.hourTo = best.value.endHour === 24 ? 0 : best.value.endHour
+  router.push('/browse')
+}
 
 const breakdown = computed(() => {
   const idSet = new Set(best.value.ids)
@@ -35,6 +48,14 @@ const breakdown = computed(() => {
         <router-link to="/login" class="underline hover:text-emerald-700 dark:hover:text-emerald-400">Sign in</router-link>
         to get recommendations based on what you personally haven't caught yet.
       </p>
+
+      <button
+        type="button"
+        class="mt-3 rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700"
+        @click="viewInBrowse"
+      >
+        View in Browse →
+      </button>
     </div>
     <p v-else class="mt-2 text-lg font-semibold text-stone-700 dark:text-stone-200">
       You've caught everything catchable this year — nice work!
