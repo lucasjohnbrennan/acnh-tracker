@@ -19,15 +19,24 @@ const CATEGORY_META = {
   bug: { icon: '🐛', label: 'Bug' },
   fish: { icon: '🐟', label: 'Fish' },
   sea: { icon: '🦀', label: 'Sea creature' },
+  fossil: { icon: '🦴', label: 'Fossil' },
+  art: { icon: '🖼️', label: 'Art' },
 }
 
 const meta = computed(() => CATEGORY_META[props.collectible.category])
+const actionVerb = computed(() =>
+  props.collectible.category === 'fossil' || props.collectible.category === 'art' ? 'Donated' : 'Caught'
+)
 const imgFailed = ref(false)
 const isCaught = computed(() => collectiblesStore.caughtIds.has(props.collectible.id))
-const monthlyWindows = computed(() => props.collectible.availability[hemisphereStore.hemisphere])
-const availableMonths = computed(() => monthlyWindows.value.map((w) => w.length > 0))
+const isTimeBased = computed(() => Boolean(props.collectible.availability))
+const monthlyWindows = computed(() =>
+  isTimeBased.value ? props.collectible.availability[hemisphereStore.hemisphere] : null
+)
+const availableMonths = computed(() => monthlyWindows.value?.map((w) => w.length > 0) ?? [])
 
 const timeLabel = computed(() => {
+  if (!isTimeBased.value) return null
   if (props.filterMonth) {
     return `In ${MONTH_NAMES[props.filterMonth - 1]}: ${formatWindows(monthlyWindows.value[props.filterMonth - 1])}`
   }
@@ -66,7 +75,14 @@ async function handleToggle() {
         <div>
           <p class="font-semibold text-stone-900 dark:text-white">{{ collectible.name }}</p>
           <p class="text-xs text-stone-500 dark:text-stone-400">
-            {{ meta.label }} · {{ collectible.location }}<span v-if="collectible.price"> · {{ collectible.price.toLocaleString() }} bells</span><span v-if="collectible.shadowSize"> · Shadow: {{ collectible.shadowSize }}</span>
+            {{ meta.label }}<span v-if="collectible.location"> · {{ collectible.location }}</span><span v-if="collectible.fossilGroup"> · {{ collectible.fossilGroup }} set</span><span v-if="collectible.price"> · {{ collectible.price.toLocaleString() }} bells</span><span v-if="collectible.shadowSize"> · Shadow: {{ collectible.shadowSize }}</span>
+          </p>
+          <p
+            v-if="collectible.hasFake"
+            class="mt-1 inline-flex w-fit items-center gap-1 whitespace-nowrap rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
+            title="A counterfeit version of this exists at Redd's — inspect it carefully before buying or donating."
+          >
+            ⚠️ Fake exists
           </p>
         </div>
       </div>
@@ -81,20 +97,22 @@ async function handleToggle() {
         :title="authStore.user ? '' : 'Sign in to track your collection'"
         @click="handleToggle"
       >
-        {{ isCaught ? 'Caught ✓' : 'Mark caught' }}
+        {{ isCaught ? `${actionVerb} ✓` : `Mark ${actionVerb.toLowerCase()}` }}
       </button>
     </div>
 
-    <p class="text-sm text-stone-700 dark:text-stone-300">{{ timeLabel }}</p>
+    <template v-if="isTimeBased">
+      <p class="text-sm text-stone-700 dark:text-stone-300">{{ timeLabel }}</p>
 
-    <div class="flex gap-0.5" :title="'Months available (' + hemisphereStore.hemisphere + 'ern hemisphere)'">
-      <span
-        v-for="(available, idx) in availableMonths"
-        :key="idx"
-        class="h-2 flex-1 rounded-sm"
-        :class="available ? 'bg-emerald-500' : 'bg-stone-200 dark:bg-stone-700'"
-        :aria-label="MONTH_NAMES[idx]"
-      />
-    </div>
+      <div class="flex gap-0.5" :title="'Months available (' + hemisphereStore.hemisphere + 'ern hemisphere)'">
+        <span
+          v-for="(available, idx) in availableMonths"
+          :key="idx"
+          class="h-2 flex-1 rounded-sm"
+          :class="available ? 'bg-emerald-500' : 'bg-stone-200 dark:bg-stone-700'"
+          :aria-label="MONTH_NAMES[idx]"
+        />
+      </div>
+    </template>
   </div>
 </template>

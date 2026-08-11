@@ -42,7 +42,7 @@ const caughtByCategory = computed(() => {
     <section v-else class="rounded-xl border border-dashed border-stone-300 p-6 text-center text-stone-600 dark:border-stone-700 dark:text-stone-300">
       <p>
         <router-link to="/login" class="font-medium text-emerald-700 underline dark:text-emerald-400">Sign in</router-link>
-        to track which of the {{ collectiblesStore.all.length }} bugs, fish, and sea creatures you've caught.
+        to track which of the {{ collectiblesStore.timeBased.length }} bugs, fish, and sea creatures you've caught.
       </p>
     </section>
 

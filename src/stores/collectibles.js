@@ -55,15 +55,21 @@ export const useCollectiblesStore = defineStore('collectibles', () => {
     bug: all.value.filter((c) => c.category === 'bug'),
     fish: all.value.filter((c) => c.category === 'fish'),
     sea: all.value.filter((c) => c.category === 'sea'),
+    fossil: all.value.filter((c) => c.category === 'fossil'),
+    art: all.value.filter((c) => c.category === 'art'),
   }))
+
+  // Fossils/art aren't time dependent (no `availability` field) — keep them
+  // out of anything driven by the month/hour grid.
+  const timeBased = computed(() => all.value.filter((c) => c.availability))
 
   const caughtCount = computed(() => caughtIds.value.size)
 
   // Signed-in users get the "most uncaught species" recommendation; signed-out
   // visitors fall back to "most total species catchable" (excludeIds empty).
   const bestTime = computed(() =>
-    findBestTime(all.value, hemisphereStore.hemisphere, authStore.user ? caughtIds.value : new Set())
+    findBestTime(timeBased.value, hemisphereStore.hemisphere, authStore.user ? caughtIds.value : new Set())
   )
 
-  return { all, byCategory, caughtIds, caughtCount, bestTime, toggleCaught }
+  return { all, byCategory, timeBased, caughtIds, caughtCount, bestTime, toggleCaught }
 })

@@ -46,7 +46,7 @@ function matchesHour(collectible) {
 
 const filtered = computed(() => {
   const query = search.value.trim().toLowerCase()
-  return collectiblesStore.all.filter((c) => {
+  return collectiblesStore.timeBased.filter((c) => {
     if (category.value !== 'all' && c.category !== category.value) return false
     if (hideCaught.value && collectiblesStore.caughtIds.has(c.id)) return false
     if (query && !c.name.toLowerCase().includes(query)) return false

@@ -13,12 +13,20 @@ import Papa from 'papaparse'
 
 const SHEET_ID = '13d_LAJPlxMa_DubPTuirkIV4DERBMXbrWQsmSh8ReK4'
 const ICON_CDN_BASE = 'https://nh-cdn.catalogue.ac/MenuIcon'
+const FURNITURE_ICON_CDN_BASE = 'https://nh-cdn.catalogue.ac/FtrIcon'
 
-const TABS = [
+// Bugs/fish/sea creatures: time-of-year/day dependent, one row per species.
+const CRITTER_TABS = [
   { category: 'bug', gid: '1444012947' },
   { category: 'fish', gid: '1221813516' },
   { category: 'sea', gid: '607204748' },
 ]
+
+// Fossils/artwork: not time dependent, so they get no `availability` field at
+// all — that's the signal the app uses to keep them off the time-based Browse
+// page and onto their own "Fossils & Art" page instead.
+const FOSSIL_GID = '20463929'
+const ARTWORK_GID = '643926250'
 
 const MONTHS = [
   'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -84,7 +92,7 @@ function buildAvailability(row, hemispherePrefix) {
   return MONTHS.map((month) => parseTimeWindows(row[`${hemispherePrefix} ${month}`]))
 }
 
-function normalizeRow(row, category) {
+function normalizeCritterRow(row, category) {
   const name = (row.Name || '').trim()
   if (!name) return null
 
@@ -109,17 +117,77 @@ function normalizeRow(row, category) {
   }
 }
 
+function normalizeFossilRow(row) {
+  const name = (row.Name || '').trim()
+  if (!name) return null
+
+  return {
+    id: `fossil-${slugify(name)}`,
+    name: titleCase(name),
+    category: 'fossil',
+    price: toNumber(row.Sell),
+    fossilGroup: row['Fossil Group'] ? titleCase(row['Fossil Group'].trim()) : null,
+    description: row.Description || null,
+    iconUrl: row.Filename ? `${FURNITURE_ICON_CDN_BASE}/${row.Filename.trim()}.png` : null,
+  }
+}
+
+// The Artwork tab has two rows per piece when a counterfeit exists (a
+// "Genuine: Yes" row and a "Genuine: No" row with the same Name). We only
+// want the real one to show up as a trackable collectible — the fake isn't
+// something you catch/donate, it's a trap to avoid — so rows are grouped by
+// Name first, and only the genuine row survives, carrying a `hasFake` flag.
+function normalizeArtworkRows(rows) {
+  const byName = new Map()
+  for (const row of rows) {
+    const name = (row.Name || '').trim()
+    if (!name) continue
+    if (!byName.has(name)) byName.set(name, [])
+    byName.get(name).push(row)
+  }
+
+  const out = []
+  for (const [name, variants] of byName) {
+    const genuine = variants.find((r) => (r.Genuine || '').trim().toLowerCase() === 'yes')
+    if (!genuine) continue
+    const hasFake = variants.some((r) => (r.Genuine || '').trim().toLowerCase() === 'no')
+
+    out.push({
+      id: `art-${slugify(name)}`,
+      name: titleCase(name),
+      category: 'art',
+      price: toNumber(genuine.Sell),
+      hasFake,
+      realArtworkTitle: genuine['Real Artwork Title'] || null,
+      artist: genuine.Artist || null,
+      description: genuine.Description || null,
+      iconUrl: genuine.Filename ? `${FURNITURE_ICON_CDN_BASE}/${genuine.Filename.trim()}.png` : null,
+    })
+  }
+  return out
+}
+
 async function main() {
   const all = []
 
-  for (const { category, gid } of TABS) {
+  for (const { category, gid } of CRITTER_TABS) {
     const rows = await fetchTabRows(gid)
     const normalized = rows
-      .map((row) => normalizeRow(row, category))
+      .map((row) => normalizeCritterRow(row, category))
       .filter(Boolean)
     console.log(`${category}: ${normalized.length} entries`)
     all.push(...normalized)
   }
+
+  const fossilRows = await fetchTabRows(FOSSIL_GID)
+  const fossils = fossilRows.map(normalizeFossilRow).filter(Boolean)
+  console.log(`fossil: ${fossils.length} entries`)
+  all.push(...fossils)
+
+  const artworkRows = await fetchTabRows(ARTWORK_GID)
+  const artwork = normalizeArtworkRows(artworkRows)
+  console.log(`art: ${artwork.length} entries`)
+  all.push(...artwork)
 
   all.sort((a, b) => a.category.localeCompare(b.category) || a.name.localeCompare(b.name))
 

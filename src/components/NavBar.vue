@@ -22,6 +22,7 @@ async function handleSignOut() {
       <nav class="flex gap-4 text-sm font-medium text-stone-600 dark:text-stone-300">
         <router-link to="/" class="hover:text-emerald-700 dark:hover:text-emerald-400" active-class="text-emerald-700 dark:text-emerald-400">Home</router-link>
         <router-link to="/browse" class="hover:text-emerald-700 dark:hover:text-emerald-400" active-class="text-emerald-700 dark:text-emerald-400">Browse</router-link>
+        <router-link to="/artifacts" class="hover:text-emerald-700 dark:hover:text-emerald-400" active-class="text-emerald-700 dark:text-emerald-400">Fossils &amp; Art</router-link>
         <router-link to="/collection" class="hover:text-emerald-700 dark:hover:text-emerald-400" active-class="text-emerald-700 dark:text-emerald-400">My Collection</router-link>
       </nav>
 

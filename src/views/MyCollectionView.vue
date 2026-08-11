@@ -10,6 +10,8 @@ const CATEGORIES = [
   { value: 'bug', label: '🐛 Bugs' },
   { value: 'fish', label: '🐟 Fish' },
   { value: 'sea', label: '🦀 Sea Creatures' },
+  { value: 'fossil', label: '🦴 Fossils' },
+  { value: 'art', label: '🖼️ Art' },
 ]
 
 function itemsFor(category) {
