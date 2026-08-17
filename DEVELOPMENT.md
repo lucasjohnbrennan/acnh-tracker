@@ -60,15 +60,22 @@ which just re-boots the app and lets vue-router take over.
 
 ## The master collectibles data
 
-`src/data/collectibles.json` is the single source of truth for every bug,
-fish, and sea creature — price, location, size, and, per hemisphere, which
-months and hours it's catchable in (some species have two catch windows a
-day, e.g. `4 AM–8 AM & 4 PM–7 PM`).
+`src/data/collectibles.json` is the single source of truth for all 316
+collectibles across five categories: `bug`, `fish`, `sea`, `fossil`, and
+`art`.
+
+Critters carry price, location, size, and, per hemisphere, which months and
+hours they're catchable in (some species have two catch windows a day, e.g.
+`4 AM–8 AM & 4 PM–7 PM`). **Fossils and art deliberately have no
+`availability` field at all** — that absence is the signal the whole app runs
+on. `timeBased` in the collectibles store filters on it, which is what keeps
+fossils and art off the Critters page and the best-time calculation, and on
+their own Fossils & Art page instead.
 
 It's generated from the community-maintained ["Data Spreadsheet for Animal
 Crossing New Horizons"](https://docs.google.com/spreadsheets/d/13d_LAJPlxMa_DubPTuirkIV4DERBMXbrWQsmSh8ReK4)
-(Insects / Fish / Sea Creatures tabs). To regenerate it (e.g. after the sheet
-gets updated for a new game update):
+(Insects / Fish / Sea Creatures / Fossils / Artwork tabs). To regenerate it
+(e.g. after the sheet gets updated for a new game update):
 
 ```bash
 npm run build:data
@@ -77,10 +84,39 @@ npm run build:data
 This re-downloads the sheet as CSV and re-normalizes it — nothing in the app
 talks to Google Sheets at runtime.
 
-Each entry also gets an `iconUrl`, built from the sheet's "Icon Filename"
-column against `https://nh-cdn.catalogue.ac/MenuIcon/{filename}.png` — the
-same CDN the sheet's own `=IMAGE()` cells point to. `CollectibleCard` falls
-back to a category emoji if an icon ever 404s.
+One wrinkle worth knowing about the Artwork tab: it has **two rows per piece**
+when a counterfeit exists, a `Genuine: Yes` row and a `Genuine: No` row
+sharing the same name. The pipeline groups by name and keeps only the genuine
+one, since the fake isn't something you collect — it's a trap to avoid. What
+survives is a `hasFake: true` flag on the real piece, which is what drives the
+*Fake exists* badge. That's why the art count is 43 and not 70.
+
+Each entry also gets an `iconUrl` built against the same CDN the sheet's own
+`=IMAGE()` cells point to — `nh-cdn.catalogue.ac/MenuIcon/{filename}.png` for
+critters, `/FtrIcon/{filename}.png` for fossils and art, which are furniture
+items in the game's data. `CollectibleCard` falls back to a category emoji if
+an icon ever 404s.
+
+## Redd's real-vs-fake art tells
+
+`src/data/art-fakes.json` maps a collectible id to `{ fake, real, also? }` —
+what the forgery gets wrong, what the genuine looks like, and an optional note
+for the three pieces (Graceful, Scary, Wistful) that have a *second* forgery
+variant. `CollectibleCard` renders it in the popover behind the *Fake exists*
+badge.
+
+It's hand-maintained, adapted from [Animal Crossing World's cheat
+sheet](https://animalcrossingworld.com/guides/new-horizons/jolly-redds-art-real-genuine-vs-fake-forgery-cheat-sheet/),
+and lives in its own file precisely so `npm run build:data` can regenerate
+`collectibles.json` without clobbering it. Its 27 keys must line up with the
+art entries flagged `hasFake` — if you add or rename a piece, check both:
+
+```bash
+node -e "const d=require('./src/data/collectibles.json'),f=require('./src/data/art-fakes.json');const ids=d.filter(c=>c.hasFake).map(c=>c.id);console.log('missing:',ids.filter(i=>!f[i]),'orphans:',Object.keys(f).filter(k=>!ids.includes(k)))"
+```
+
+A piece flagged `hasFake` with no entry still gets a badge — it just falls
+back to generic "compare it carefully" wording rather than breaking.
 
 ## How "best time to time-travel" is calculated
 
@@ -92,6 +128,25 @@ grid cell(s) with the highest count, and among ties prefers the longest
 contiguous window. Recomputes automatically whenever hemisphere, sign-in
 state, or your caught list changes.
 
+## The museum-complete celebration
+
+`MuseumCompleteCelebration` is mounted once in `App.vue` and fires confetti
+when `museumComplete` in the collectibles store flips true — every collectible
+donated, artwork included.
+
+The tricky part is *when* it's allowed to fire. `caughtIds` starts as an empty
+set and only fills in once Firestore's snapshot arrives, so a player who has
+already finished looks, for one tick on every single page load, like someone
+who just that second completed the museum. The store therefore exposes a
+`hydrated` flag (set in the snapshot callback, cleared on sign-out), and the
+component only celebrates on a false→true transition where `hydrated` was
+*already* true beforehand. Net effect: it fires at the moment you finish, and
+never on a reload.
+
+The confetti is a plain `<canvas>` with hand-rolled physics — two corner
+cannons plus a few seconds of drift, no dependency. `prefers-reduced-motion`
+skips the confetti and the card animations entirely, leaving just the message.
+
 ## Project structure
 
 ```
@@ -100,11 +155,22 @@ src/data/collectibles.json       master collectibles list (generated, committed)
 src/data/art-fakes.json          real-vs-fake tells for Redd's forgeries (hand-written)
 src/lib/time.js                  best-time-to-travel calculation (pure functions)
 src/lib/firebase.js              Firebase app/auth/db init
-src/stores/                      Pinia stores: auth, hemisphere, collectibles
+src/stores/                      Pinia stores: auth, hemisphere, collectibles,
+                                 critterFilters, artifactFilters
 src/views/                       HomeView, CrittersView, ArtifactsView, LoginView, MyCollectionView
 src/components/                  NavBar, HemisphereToggle, BestTimeBanner, CollectibleCard,
                                  MuseumCompleteCelebration
 ```
+
+Routes: `/` home, `/critters` time-dependent critters, `/artifacts` fossils
+and art, `/collection` your collection (auth-gated), `/login`. `/browse`
+redirects to `/critters` — the Critters page was called Browse until it
+picked up a name that says what it lists, and old links still work.
+
+The two filter stores exist so search/category/month/hour selections survive
+navigating away and back. They're also how the home page's best-time banner
+deep-links into Critters: it sets the month and hour range, then pushes the
+route.
 
 **Stack:** Vue 3 (Composition API, `<script setup>`) + Vite + Tailwind CSS,
 Pinia for state, vue-router. No backend server — Firebase Auth handles sign-in
@@ -118,3 +184,8 @@ and Firestore stores each user's caught collectibles.
 - Icons are hotlinked from a third-party CDN (`nh-cdn.catalogue.ac`), not
   self-hosted — if that CDN ever goes away, icons fall back to a category
   emoji rather than breaking.
+- The art fake tells are hand-written, not generated, so they won't pick up
+  changes if Nintendo ever alters a piece — unlike `collectibles.json`, which
+  is one `npm run build:data` away from current.
+- The tells are text-only. Some are easy to act on ("the stone is blue"),
+  others really want the side-by-side image the tooltip links out to.
