@@ -23,7 +23,7 @@ const CRITTER_TABS = [
 ]
 
 // Fossils/artwork: not time dependent, so they get no `availability` field at
-// all — that's the signal the app uses to keep them off the time-based Browse
+// all — that's the signal the app uses to keep them off the time-based Critters
 // page and onto their own "Fossils & Art" page instead.
 const FOSSIL_GID = '20463929'
 const ARTWORK_GID = '643926250'

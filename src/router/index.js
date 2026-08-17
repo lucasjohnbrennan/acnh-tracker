@@ -5,7 +5,9 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     { path: '/', name: 'home', component: () => import('../views/HomeView.vue') },
-    { path: '/browse', name: 'browse', component: () => import('../views/BrowseView.vue') },
+    { path: '/critters', name: 'critters', component: () => import('../views/CrittersView.vue') },
+    // Kept so older links/bookmarks to the page when it was called "Browse" still land.
+    { path: '/browse', redirect: { name: 'critters' } },
     { path: '/artifacts', name: 'artifacts', component: () => import('../views/ArtifactsView.vue') },
     { path: '/login', name: 'login', component: () => import('../views/LoginView.vue') },
     {

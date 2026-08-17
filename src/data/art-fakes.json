@@ -1,0 +1,113 @@
+{
+  "art-academic-painting": {
+    "fake": "A large coffee stain in the top-right corner.",
+    "real": "The paper is clean — no stain."
+  },
+  "art-amazing-painting": {
+    "fake": "The figure in the middle is bare-headed.",
+    "real": "That figure wears a large black hat."
+  },
+  "art-ancient-statue": {
+    "fake": "Two antenna-like points stick up from the top left and right.",
+    "real": "No antennae on the head."
+  },
+  "art-basic-painting": {
+    "fake": "Hair covers his entire forehead.",
+    "real": "A high hairline leaves much more forehead showing."
+  },
+  "art-beautiful-statue": {
+    "fake": "An extra decorative necklace sits low on her neck.",
+    "real": "Bare neck and shoulders — no necklace."
+  },
+  "art-detailed-painting": {
+    "fake": "Purple colour scheme.",
+    "real": "Blue colour scheme."
+  },
+  "art-famous-painting": {
+    "fake": "Eyebrows angle upward and sit high above her eyes.",
+    "real": "Natural eyebrows resting close to the eyes."
+  },
+  "art-gallant-statue": {
+    "fake": "An extra book is tucked by the arm on the left.",
+    "real": "No extra book."
+  },
+  "art-graceful-painting": {
+    "fake": "The woman is enlarged to fill almost the whole canvas, and the white tag in her hair is gone.",
+    "real": "She fills only about two thirds of the canvas and wears a white tag in her hair.",
+    "also": "A second forgery exists where she is mirrored to face left instead."
+  },
+  "art-informative-statue": {
+    "fake": "The stone is blue.",
+    "real": "The stone is entirely black."
+  },
+  "art-jolly-painting": {
+    "fake": "Nothing sprouts from the straw in the bottom right.",
+    "real": "A stray weed pokes out of the straw in the bottom right."
+  },
+  "art-motherly-statue": {
+    "fake": "The wolf's tongue hangs out of its mouth.",
+    "real": "The wolf's mouth is closed, no tongue."
+  },
+  "art-moving-painting": {
+    "fake": "The tall trees along the far-right edge are missing.",
+    "real": "Tall leafy trees fill the far-right edge."
+  },
+  "art-mystic-statue": {
+    "fake": "A large earring dangles from her ear.",
+    "real": "No earring."
+  },
+  "art-quaint-painting": {
+    "fake": "A heavy stream of liquid pours from the jug into the pot.",
+    "real": "Barely a trickle comes out of the jug."
+  },
+  "art-robust-statue": {
+    "fake": "A wristwatch is worn on his raised arm.",
+    "real": "No wristwatch."
+  },
+  "art-rock-head-statue": {
+    "fake": "A smiling mouth at the bottom of the rock.",
+    "real": "The mouth is neutral."
+  },
+  "art-scary-painting": {
+    "fake": "His eyebrows are reversed, angling inward toward the middle of his forehead.",
+    "real": "Normal-looking eyebrows.",
+    "also": "A second forgery exists where he smiles instead of frowning — both fakes share the same wrong eyebrows."
+  },
+  "art-scenic-painting": {
+    "fake": "The second man and the extra animals near the front of the snow scene are missing.",
+    "real": "More people and animals travelling in the foreground."
+  },
+  "art-serene-painting": {
+    "fake": "The animal in her hands is patchy with dark grey shading.",
+    "real": "The animal is an even white."
+  },
+  "art-solemn-painting": {
+    "fake": "The man in the doorway at the back is pointing.",
+    "real": "His arm rests against the wall."
+  },
+  "art-tremendous-statue": {
+    "fake": "A lid covers the container.",
+    "real": "The container is wide open, no lid."
+  },
+  "art-valiant-statue": {
+    "fake": "The legs are mirrored — the left leg steps forward.",
+    "real": "The right leg steps forward."
+  },
+  "art-warrior-statue": {
+    "fake": "He leans on an extra shovel planted in front of him.",
+    "real": "No shovel."
+  },
+  "art-wild-painting-left-half": {
+    "fake": "The creature is green.",
+    "real": "The creature is white."
+  },
+  "art-wild-painting-right-half": {
+    "fake": "The creature is white.",
+    "real": "The creature is green."
+  },
+  "art-wistful-painting": {
+    "fake": "Her earring is star-shaped.",
+    "real": "Her earring is a round ball.",
+    "also": "A second forgery exists where her eyes are closed."
+  }
+}

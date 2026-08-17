@@ -3,13 +3,13 @@ import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useCollectiblesStore } from '../stores/collectibles'
 import { useHemisphereStore } from '../stores/hemisphere'
-import { useBrowseFiltersStore } from '../stores/browseFilters'
+import { useCritterFiltersStore } from '../stores/critterFilters'
 import { MONTH_NAMES, formatHour, isHourInWindows, rangeOverlapsWindows } from '../lib/time'
 import CollectibleCard from '../components/CollectibleCard.vue'
 
 const collectiblesStore = useCollectiblesStore()
 const hemisphereStore = useHemisphereStore()
-const filtersStore = useBrowseFiltersStore()
+const filtersStore = useCritterFiltersStore()
 const { search, category, month, hourFrom, hourTo, hideCaught } = storeToRefs(filtersStore)
 
 const CATEGORIES = [

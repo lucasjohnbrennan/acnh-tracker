@@ -3,22 +3,22 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCollectiblesStore } from '../stores/collectibles'
 import { useAuthStore } from '../stores/auth'
-import { useBrowseFiltersStore } from '../stores/browseFilters'
+import { useCritterFiltersStore } from '../stores/critterFilters'
 
 const collectiblesStore = useCollectiblesStore()
 const authStore = useAuthStore()
-const filtersStore = useBrowseFiltersStore()
+const filtersStore = useCritterFiltersStore()
 const router = useRouter()
 
 const best = computed(() => collectiblesStore.bestTime)
 
-function viewInBrowse() {
+function viewInCritters() {
   filtersStore.search = ''
   filtersStore.category = 'all'
   filtersStore.month = best.value.month
   filtersStore.hourFrom = best.value.startHour
   filtersStore.hourTo = best.value.endHour === 24 ? 0 : best.value.endHour
-  router.push('/browse')
+  router.push('/critters')
 }
 
 const breakdown = computed(() => {
@@ -52,9 +52,9 @@ const breakdown = computed(() => {
       <button
         type="button"
         class="mt-3 rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700"
-        @click="viewInBrowse"
+        @click="viewInCritters"
       >
-        View in Browse →
+        View in Critters →
       </button>
     </div>
     <p v-else class="mt-2 text-lg font-semibold text-stone-700 dark:text-stone-200">

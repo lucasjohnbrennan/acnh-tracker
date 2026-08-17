@@ -10,6 +10,10 @@ import allCollectibles from '../data/collectibles.json'
 export const useCollectiblesStore = defineStore('collectibles', () => {
   const all = ref(allCollectibles)
   const caughtIds = ref(new Set())
+  // False until the signed-in user's saved collection has actually arrived from
+  // Firestore. Without it, every page load looks like "just caught everything"
+  // to anyone already finished, and the museum celebration would replay forever.
+  const hydrated = ref(false)
   let unsubscribeSnapshot = null
 
   const authStore = useAuthStore()
@@ -20,6 +24,7 @@ export const useCollectiblesStore = defineStore('collectibles', () => {
     unsubscribeSnapshot = onSnapshot(doc(db, 'users', uid), (snap) => {
       const ids = snap.exists() ? snap.data().caughtIds || [] : []
       caughtIds.value = new Set(ids)
+      hydrated.value = true
     })
   }
 
@@ -32,6 +37,7 @@ export const useCollectiblesStore = defineStore('collectibles', () => {
         if (unsubscribeSnapshot) unsubscribeSnapshot()
         unsubscribeSnapshot = null
         caughtIds.value = new Set()
+        hydrated.value = false
       }
     },
     { immediate: true }
@@ -65,11 +71,27 @@ export const useCollectiblesStore = defineStore('collectibles', () => {
 
   const caughtCount = computed(() => caughtIds.value.size)
 
+  // "Museum complete" = the whole building: every bug, fish, sea creature,
+  // fossil and piece of artwork donated.
+  const museumComplete = computed(
+    () => all.value.length > 0 && all.value.every((c) => caughtIds.value.has(c.id))
+  )
+
   // Signed-in users get the "most uncaught species" recommendation; signed-out
   // visitors fall back to "most total species catchable" (excludeIds empty).
   const bestTime = computed(() =>
     findBestTime(timeBased.value, hemisphereStore.hemisphere, authStore.user ? caughtIds.value : new Set())
   )
 
-  return { all, byCategory, timeBased, caughtIds, caughtCount, bestTime, toggleCaught }
+  return {
+    all,
+    byCategory,
+    timeBased,
+    caughtIds,
+    caughtCount,
+    hydrated,
+    museumComplete,
+    bestTime,
+    toggleCaught,
+  }
 })

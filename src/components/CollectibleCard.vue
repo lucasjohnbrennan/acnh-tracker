@@ -1,9 +1,13 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useCollectiblesStore } from '../stores/collectibles'
 import { useAuthStore } from '../stores/auth'
 import { useHemisphereStore } from '../stores/hemisphere'
 import { formatWindows, summarizeYearWindows, MONTH_NAMES } from '../lib/time'
+import artFakes from '../data/art-fakes.json'
+
+const FAKE_GUIDE_URL =
+  'https://animalcrossingworld.com/guides/new-horizons/jolly-redds-art-real-genuine-vs-fake-forgery-cheat-sheet/'
 
 const props = defineProps({
   collectible: { type: Object, required: true },
@@ -29,6 +33,34 @@ const actionVerb = computed(() =>
 )
 const imgFailed = ref(false)
 const isCaught = computed(() => collectiblesStore.caughtIds.has(props.collectible.id))
+
+// Sell price is meaningful for critters and fossils, but not for art: Blathers
+// wants it and Nook's Cranny won't buy it, so the number is just noise here.
+const showPrice = computed(() => Boolean(props.collectible.price) && props.collectible.category !== 'art')
+
+// How to tell this piece's forgery from the genuine article, if we have it.
+const fakeTell = computed(() => artFakes[props.collectible.id] ?? null)
+const showFakeInfo = ref(false)
+const fakeInfoRoot = ref(null)
+
+function closeOnOutsideClick(event) {
+  if (fakeInfoRoot.value && !fakeInfoRoot.value.contains(event.target)) showFakeInfo.value = false
+}
+
+function closeOnEscape(event) {
+  if (event.key === 'Escape') showFakeInfo.value = false
+}
+
+watch(showFakeInfo, (open) => {
+  const method = open ? 'addEventListener' : 'removeEventListener'
+  document[method]('pointerdown', closeOnOutsideClick)
+  document[method]('keydown', closeOnEscape)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('pointerdown', closeOnOutsideClick)
+  document.removeEventListener('keydown', closeOnEscape)
+})
 const isTimeBased = computed(() => Boolean(props.collectible.availability))
 const monthlyWindows = computed(() =>
   isTimeBased.value ? props.collectible.availability[hemisphereStore.hemisphere] : null
@@ -75,15 +107,49 @@ async function handleToggle() {
         <div>
           <p class="font-semibold text-stone-900 dark:text-white">{{ collectible.name }}</p>
           <p class="text-xs text-stone-500 dark:text-stone-400">
-            {{ meta.label }}<span v-if="collectible.location"> · {{ collectible.location }}</span><span v-if="collectible.fossilGroup"> · {{ collectible.fossilGroup }} set</span><span v-if="collectible.price"> · {{ collectible.price.toLocaleString() }} bells</span><span v-if="collectible.shadowSize"> · Shadow: {{ collectible.shadowSize }}</span>
+            {{ meta.label }}<span v-if="collectible.location"> · {{ collectible.location }}</span><span v-if="collectible.fossilGroup"> · {{ collectible.fossilGroup }} set</span><span v-if="showPrice"> · {{ collectible.price.toLocaleString() }} bells</span><span v-if="collectible.shadowSize"> · Shadow: {{ collectible.shadowSize }}</span>
           </p>
-          <p
-            v-if="collectible.hasFake"
-            class="mt-1 inline-flex w-fit items-center gap-1 whitespace-nowrap rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
-            title="A counterfeit version of this exists at Redd's — inspect it carefully before buying or donating."
-          >
-            ⚠️ Fake exists
-          </p>
+
+          <div v-if="collectible.hasFake" ref="fakeInfoRoot" class="relative mt-1">
+            <button
+              type="button"
+              class="inline-flex w-fit items-center gap-1 whitespace-nowrap rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 transition-colors hover:bg-amber-200 dark:bg-amber-900/40 dark:text-amber-300 dark:hover:bg-amber-900/70"
+              :aria-expanded="showFakeInfo"
+              title="A counterfeit version of this exists at Redd's — tap to see how to spot it."
+              @click="showFakeInfo = !showFakeInfo"
+            >
+              ⚠️ Fake exists
+            </button>
+
+            <div
+              v-if="showFakeInfo"
+              class="absolute left-0 top-full z-20 mt-1.5 w-64 rounded-lg border border-stone-200 bg-white p-3 text-xs shadow-lg dark:border-stone-700 dark:bg-stone-800"
+            >
+              <p class="font-semibold text-stone-900 dark:text-white">Spotting the forgery</p>
+              <template v-if="fakeTell">
+                <p class="mt-2 text-stone-600 dark:text-stone-300">
+                  <span class="font-semibold text-red-600 dark:text-red-400">Fake:</span>
+                  {{ fakeTell.fake }}
+                </p>
+                <p class="mt-1.5 text-stone-600 dark:text-stone-300">
+                  <span class="font-semibold text-emerald-700 dark:text-emerald-400">Real:</span>
+                  {{ fakeTell.real }}
+                </p>
+                <p v-if="fakeTell.also" class="mt-1.5 text-stone-500 dark:text-stone-400">{{ fakeTell.also }}</p>
+              </template>
+              <p v-else class="mt-2 text-stone-600 dark:text-stone-300">
+                A counterfeit of this piece exists at Redd's — compare it carefully before buying.
+              </p>
+              <a
+                :href="FAKE_GUIDE_URL"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="mt-2 inline-block text-stone-500 underline hover:text-emerald-700 dark:text-stone-400 dark:hover:text-emerald-400"
+              >
+                Side-by-side pictures ↗
+              </a>
+            </div>
+          </div>
         </div>
       </div>
 

@@ -55,7 +55,7 @@ Two build details that make a Vite SPA work on Pages: `vite.config.js` sets
 `base: '/acnh-tracker/'` for production builds (Pages serves the repo under
 that subpath, not domain root), and a `postbuild` script copies `index.html`
 to `404.html` so that direct links/refreshes on client-side routes (like
-`/browse`) don't 404 — GitHub Pages serves `404.html` for any unmatched path,
+`/critters`) don't 404 — GitHub Pages serves `404.html` for any unmatched path,
 which just re-boots the app and lets vue-router take over.
 
 ## The master collectibles data
@@ -97,11 +97,13 @@ state, or your caught list changes.
 ```
 scripts/fetch-collectibles.mjs   data pipeline (Google Sheet -> collectibles.json)
 src/data/collectibles.json       master collectibles list (generated, committed)
+src/data/art-fakes.json          real-vs-fake tells for Redd's forgeries (hand-written)
 src/lib/time.js                  best-time-to-travel calculation (pure functions)
 src/lib/firebase.js              Firebase app/auth/db init
 src/stores/                      Pinia stores: auth, hemisphere, collectibles
-src/views/                       HomeView, BrowseView, LoginView, MyCollectionView
-src/components/                  NavBar, HemisphereToggle, BestTimeBanner, CollectibleCard
+src/views/                       HomeView, CrittersView, ArtifactsView, LoginView, MyCollectionView
+src/components/                  NavBar, HemisphereToggle, BestTimeBanner, CollectibleCard,
+                                 MuseumCompleteCelebration
 ```
 
 **Stack:** Vue 3 (Composition API, `<script setup>`) + Vite + Tailwind CSS,

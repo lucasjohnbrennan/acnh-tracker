@@ -1,5 +1,6 @@
 <script setup>
 import NavBar from './components/NavBar.vue'
+import MuseumCompleteCelebration from './components/MuseumCompleteCelebration.vue'
 </script>
 
 <template>
@@ -8,5 +9,7 @@ import NavBar from './components/NavBar.vue'
     <main class="mx-auto max-w-5xl px-4 py-6">
       <router-view />
     </main>
+
+    <MuseumCompleteCelebration />
   </div>
 </template>
