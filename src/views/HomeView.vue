@@ -22,11 +22,13 @@ const totals = computed(() =>
 
 const caughtByCategory = computed(() => {
   const counts = Object.fromEntries(TILES.map(({ key }) => [key, 0]))
-  for (const c of collectiblesStore.all) {
+  for (const c of collectiblesStore.museumItems) {
     if (collectiblesStore.caughtIds.has(c.id)) counts[c.category]++
   }
   return counts
 })
+
+const musicTotal = computed(() => collectiblesStore.musicItems.length)
 </script>
 
 <template>
@@ -50,8 +52,9 @@ const caughtByCategory = computed(() => {
     <section v-else class="rounded-xl border border-dashed border-stone-300 p-6 text-center text-stone-600 dark:border-stone-700 dark:text-stone-300">
       <p>
         <router-link to="/login" class="font-medium text-emerald-700 underline dark:text-emerald-400">Sign in</router-link>
-        to track all {{ collectiblesStore.all.length }} collectibles — every bug, fish, sea creature,
-        fossil and artwork — and watch your museum fill up.
+        to track all {{ collectiblesStore.museumItems.length }} museum collectibles — every bug, fish,
+        sea creature, fossil and artwork — plus {{ musicTotal }} K.K. Slider songs, and watch your
+        museum fill up.
       </p>
     </section>
 

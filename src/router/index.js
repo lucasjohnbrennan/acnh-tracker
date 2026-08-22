@@ -9,6 +9,7 @@ const router = createRouter({
     // Kept so older links/bookmarks to the page when it was called "Browse" still land.
     { path: '/browse', redirect: { name: 'critters' } },
     { path: '/artifacts', name: 'artifacts', component: () => import('../views/ArtifactsView.vue') },
+    { path: '/music', name: 'music', component: () => import('../views/MusicView.vue') },
     { path: '/login', name: 'login', component: () => import('../views/LoginView.vue') },
     {
       path: '/collection',

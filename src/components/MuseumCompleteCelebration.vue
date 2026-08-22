@@ -17,7 +17,7 @@ let rafId = null
 let lastFrame = 0
 let timers = []
 
-const donatedCount = computed(() => collectiblesStore.all.length)
+const donatedCount = computed(() => collectiblesStore.museumItems.length)
 
 const prefersReducedMotion = () =>
   window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false

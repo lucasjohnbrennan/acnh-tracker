@@ -60,21 +60,30 @@ which just re-boots the app and lets vue-router take over.
 
 ## The master collectibles data
 
-`src/data/collectibles.json` is the single source of truth for all 316
-collectibles across five categories: `bug`, `fish`, `sea`, `fossil`, and
-`art`.
+`src/data/collectibles.json` is the single source of truth for all 423
+collectibles across six categories: `bug`, `fish`, `sea`, `fossil`, `art`,
+and `music`.
 
 Critters carry price, location, size, and, per hemisphere, which months and
 hours they're catchable in (some species have two catch windows a day, e.g.
-`4 AM–8 AM & 4 PM–7 PM`). **Fossils and art deliberately have no
+`4 AM–8 AM & 4 PM–7 PM`). **Fossils, art and music deliberately have no
 `availability` field at all** — that absence is the signal the whole app runs
 on. `timeBased` in the collectibles store filters on it, which is what keeps
-fossils and art off the Critters page and the best-time calculation, and on
-their own Fossils & Art page instead.
+them off the Critters page and the best-time calculation, and on their own
+pages instead.
+
+There's a second, independent axis: **is it a museum exhibit?** Songs are the
+only thing you collect that Blathers won't take, so music rows — and only
+music rows — carry `museum: false`. `museumItems` in the store filters with
+`c.museum !== false` rather than a truthy test, deliberately: every other
+category omits the key entirely, and a truthy test would silently exclude all
+316 of them. That one computed is what every completion number hangs off —
+the My Collection bar, the home page tiles, and `museumComplete` — so songs
+can never nudge a donation count.
 
 It's generated from the community-maintained ["Data Spreadsheet for Animal
 Crossing New Horizons"](https://docs.google.com/spreadsheets/d/13d_LAJPlxMa_DubPTuirkIV4DERBMXbrWQsmSh8ReK4)
-(Insects / Fish / Sea Creatures / Fossils / Artwork tabs). To regenerate it
+(Insects / Fish / Sea Creatures / Fossils / Artwork / Music tabs). To regenerate it
 (e.g. after the sheet gets updated for a new game update):
 
 ```bash
@@ -93,9 +102,11 @@ survives is a `hasFake: true` flag on the real piece, which is what drives the
 
 Each entry also gets an `iconUrl` built against the same CDN the sheet's own
 `=IMAGE()` cells point to — `nh-cdn.catalogue.ac/MenuIcon/{filename}.png` for
-critters, `/FtrIcon/{filename}.png` for fossils and art, which are furniture
-items in the game's data. `CollectibleCard` falls back to a category emoji if
-an icon ever 404s.
+critters, `/FtrIcon/{filename}.png` for fossils, art and music, all of which
+are furniture items in the game's data. (The CDN also serves the big album
+covers at `/Audio/{filename}.png`, but at ~470 KB apiece against ~20 KB for
+the framed-record icon, a 107-card grid isn't the place for them.)
+`CollectibleCard` falls back to a category emoji if an icon ever 404s.
 
 ## Redd's real-vs-fake art tells
 
@@ -118,6 +129,35 @@ node -e "const d=require('./src/data/collectibles.json'),f=require('./src/data/a
 A piece flagged `hasFake` with no entry still gets a badge — it just falls
 back to generic "compare it carefully" wording rather than breaking.
 
+## K.K. Slider's songs
+
+The Music tab of the same spreadsheet lists 110 rows, but only **107** are
+collectibles. Three of them (`Hazure01`–`03`) are the jingles K.K. plays when
+you request something he doesn't know; the sheet's own notes say they don't
+give a take-home track, so `normalizeMusicRow` drops anything matching
+`does not give take-home track`. 107 is also exactly the real song count — 95
+at launch plus 12 added in 2.0.0, which is why entries keep a `versionAdded`
+for the *Update 2.0.0* badge.
+
+No `price` field, on purpose: every single song is 3,200 bells to buy and 800
+to sell, so the number distinguishes nothing. What's actually useful is where
+a record comes from, which is split across three fields:
+
+- `mood` — pulled out of the sheet's prose notes (`Possible song K.K. will
+  play when choosing "Laid-back." as your mood`) by `MOOD_RE`. Picking a mood
+  before a request is the one lever you have over what he plays, so it's the
+  axis the Music page filters on, and the five values are his dialogue options
+  verbatim, punctuation included.
+- `nookShopping` — whether it's in the Nook Shopping daily rotation, or only
+  obtainable by asking K.K. for it directly.
+- `sourceNotes` — the raw note, shown on the card only for the five songs with
+  no mood (three request-only hidden tracks, plus the two K.K. hands you for
+  turning up, one of them birthday-gated). Mood songs show `source` instead,
+  since their note says nothing the mood badge doesn't.
+
+`src/lib/music.js` holds the mood → emoji map, shared because both the filter
+pills in `MusicView` and the badge in `CollectibleCard` need the same one.
+
 ## How "best time to time-travel" is calculated
 
 `src/lib/time.js` builds a 12-month × 24-hour grid of how many species are
@@ -132,7 +172,9 @@ state, or your caught list changes.
 
 `MuseumCompleteCelebration` is mounted once in `App.vue` and fires confetti
 when `museumComplete` in the collectibles store flips true — every collectible
-donated, artwork included.
+donated, artwork included. Songs are not included: they're not exhibits, and
+gating the confetti on them would mean a finished museum went uncelebrated
+over a record you never bought.
 
 The tricky part is *when* it's allowed to fire. `caughtIds` starts as an empty
 set and only fills in once Firestore's snapshot arrives, so a player who has
@@ -154,21 +196,23 @@ scripts/fetch-collectibles.mjs   data pipeline (Google Sheet -> collectibles.jso
 src/data/collectibles.json       master collectibles list (generated, committed)
 src/data/art-fakes.json          real-vs-fake tells for Redd's forgeries (hand-written)
 src/lib/time.js                  best-time-to-travel calculation (pure functions)
+src/lib/music.js                 K.K.'s five mood prompts + their emoji (shared)
 src/lib/firebase.js              Firebase app/auth/db init
 src/stores/                      Pinia stores: auth, hemisphere, collectibles,
-                                 critterFilters, artifactFilters
-src/views/                       HomeView, CrittersView, ArtifactsView, LoginView, MyCollectionView
+                                 critterFilters, artifactFilters, musicFilters
+src/views/                       HomeView, CrittersView, ArtifactsView, MusicView, LoginView,
+                                 MyCollectionView
 src/components/                  NavBar, HemisphereToggle, BestTimeBanner, CollectibleCard,
                                  MuseumCompleteCelebration
 ```
 
 Routes: `/` home, `/critters` time-dependent critters, `/artifacts` fossils
-and art, `/collection` your collection (auth-gated), `/login`. `/browse`
-redirects to `/critters` — the Critters page was called Browse until it
+and art, `/music` K.K. Slider's songs, `/collection` your collection
+(auth-gated), `/login`. `/browse` redirects to `/critters` — the Critters page was called Browse until it
 picked up a name that says what it lists, and old links still work.
 
-The two filter stores exist so search/category/month/hour selections survive
-navigating away and back. They're also how the home page's best-time banner
+The three filter stores exist so search/category/month/hour/mood selections
+survive navigating away and back. They're also how the home page's best-time banner
 deep-links into Critters: it sets the month and hour range, then pushes the
 route.
 

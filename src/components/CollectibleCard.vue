@@ -5,6 +5,7 @@ import { useAuthStore } from '../stores/auth'
 import { useHemisphereStore } from '../stores/hemisphere'
 import { formatWindows, summarizeYearWindows, MONTH_NAMES } from '../lib/time'
 import artFakes from '../data/art-fakes.json'
+import { MOOD_ICONS } from '../lib/music'
 
 const FAKE_GUIDE_URL =
   'https://animalcrossingworld.com/guides/new-horizons/jolly-redds-art-real-genuine-vs-fake-forgery-cheat-sheet/'
@@ -25,18 +26,35 @@ const CATEGORY_META = {
   sea: { icon: '🦀', label: 'Sea creature' },
   fossil: { icon: '🦴', label: 'Fossil' },
   art: { icon: '🖼️', label: 'Art' },
+  music: { icon: '🎵', label: 'Song' },
+}
+
+// Critters get caught, museum pieces get donated, and K.K.'s records just get
+// collected — nothing to hand to Blathers.
+const ACTION_VERBS = {
+  fossil: 'Donated',
+  art: 'Donated',
+  music: 'Collected',
 }
 
 const meta = computed(() => CATEGORY_META[props.collectible.category])
-const actionVerb = computed(() =>
-  props.collectible.category === 'fossil' || props.collectible.category === 'art' ? 'Donated' : 'Caught'
-)
+const actionVerb = computed(() => ACTION_VERBS[props.collectible.category] ?? 'Caught')
 const imgFailed = ref(false)
 const isCaught = computed(() => collectiblesStore.caughtIds.has(props.collectible.id))
 
 // Sell price is meaningful for critters and fossils, but not for art: Blathers
 // wants it and Nook's Cranny won't buy it, so the number is just noise here.
+// Songs carry no price at all — every one of them is the same 3,200/800.
 const showPrice = computed(() => Boolean(props.collectible.price) && props.collectible.category !== 'art')
+
+const isMusic = computed(() => props.collectible.category === 'music')
+
+// For songs with a mood, the badge above already says everything the sheet's
+// notes do, so show where the record comes from instead. For the few with no
+// mood, the notes are the only place that explains how to get them.
+const musicSourceLabel = computed(() =>
+  props.collectible.mood ? props.collectible.source : props.collectible.sourceNotes
+)
 
 // How to tell this piece's forgery from the genuine article, if we have it.
 const fakeTell = computed(() => artFakes[props.collectible.id] ?? null)
@@ -107,7 +125,7 @@ async function handleToggle() {
         <div>
           <p class="font-semibold text-stone-900 dark:text-white">{{ collectible.name }}</p>
           <p class="text-xs text-stone-500 dark:text-stone-400">
-            {{ meta.label }}<span v-if="collectible.location"> · {{ collectible.location }}</span><span v-if="collectible.fossilGroup"> · {{ collectible.fossilGroup }} set</span><span v-if="showPrice"> · {{ collectible.price.toLocaleString() }} bells</span><span v-if="collectible.shadowSize"> · Shadow: {{ collectible.shadowSize }}</span>
+            {{ meta.label }}<span v-if="collectible.location"> · {{ collectible.location }}</span><span v-if="collectible.fossilGroup"> · {{ collectible.fossilGroup }} set</span><span v-if="collectible.seasonEvent"> · {{ collectible.seasonEvent }}</span><span v-if="showPrice"> · {{ collectible.price.toLocaleString() }} bells</span><span v-if="collectible.shadowSize"> · Shadow: {{ collectible.shadowSize }}</span>
           </p>
 
           <div v-if="collectible.hasFake" ref="fakeInfoRoot" class="relative mt-1">
@@ -166,6 +184,25 @@ async function handleToggle() {
         {{ isCaught ? `${actionVerb} ✓` : `Mark ${actionVerb.toLowerCase()}` }}
       </button>
     </div>
+
+    <template v-if="isMusic">
+      <div class="flex flex-wrap items-center gap-1.5">
+        <span
+          v-if="collectible.mood"
+          class="rounded-full bg-sky-100 px-2 py-0.5 text-xs font-medium text-sky-800 dark:bg-sky-900/40 dark:text-sky-300"
+          title="Pick this mood before asking K.K. for a song and he might play this one."
+        >{{ MOOD_ICONS[collectible.mood] }} {{ collectible.mood }}</span>
+        <span
+          class="rounded-full bg-stone-100 px-2 py-0.5 text-xs font-medium text-stone-600 dark:bg-stone-800 dark:text-stone-300"
+        >{{ collectible.nookShopping ? '🛒 Nook Shopping' : '🎤 K.K. only' }}</span>
+        <span
+          v-if="collectible.versionAdded && collectible.versionAdded !== '1.0.0'"
+          class="rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-800 dark:bg-violet-900/40 dark:text-violet-300"
+          title="Added in a later game update"
+        >Update {{ collectible.versionAdded }}</span>
+      </div>
+      <p v-if="musicSourceLabel" class="text-sm text-stone-700 dark:text-stone-300">{{ musicSourceLabel }}</p>
+    </template>
 
     <template v-if="isTimeBased">
       <p class="text-sm text-stone-700 dark:text-stone-300">{{ timeLabel }}</p>

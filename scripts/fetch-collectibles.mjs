@@ -1,9 +1,10 @@
 // Builds src/data/collectibles.json — the single master list of every ACNH
-// bug, fish, and sea creature, with per-month/per-hemisphere catch windows.
+// bug, fish, and sea creature, with per-month/per-hemisphere catch windows,
+// plus the fossils, artwork and K.K. Slider songs.
 //
 // Source: the community-maintained "Data Spreadsheet for Animal Crossing New
-// Horizons" (read-only, public). We pull the Insects / Fish / Sea Creatures
-// tabs as CSV and normalize them into one schema.
+// Horizons" (read-only, public). We pull the Insects / Fish / Sea Creatures /
+// Fossils / Artwork / Music tabs as CSV and normalize them into one schema.
 //
 // Run with: npm run build:data
 
@@ -27,6 +28,10 @@ const CRITTER_TABS = [
 // page and onto their own "Fossils & Art" page instead.
 const FOSSIL_GID = '20463929'
 const ARTWORK_GID = '643926250'
+
+// K.K. Slider songs: not time dependent either, and not museum exhibits at all
+// — they get 'museum: false' so they stay out of every completion count.
+const MUSIC_GID = '338594892'
 
 const MONTHS = [
   'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -167,6 +172,46 @@ function normalizeArtworkRows(rows) {
   return out
 }
 
+// K.K.'s three "Hazure" tracks are what he plays when you request a song he
+// doesn't know. They're in the sheet, but there's no record to take home
+// afterwards, so they aren't collectibles and never reach the app.
+const NO_TAKE_HOME_RE = /does not give take-home track/i
+
+// e.g. `Possible song K.K. will play when choosing "Laid-back." as your mood` —
+// the mood you pick is the one lever you have over which song he plays, so it's
+// worth pulling out of the prose into its own filterable field.
+const MOOD_RE = /when choosing "(.+?)" as your mood/
+
+function normalizeMusicRow(row) {
+  const name = (row.Name || '').trim()
+  if (!name) return null
+
+  const notes = (row['Source Notes'] || '').trim()
+  if (NO_TAKE_HOME_RE.test(notes)) return null
+
+  const source = (row.Source || '').trim()
+
+  return {
+    id: `music-${slugify(name)}`,
+    name,
+    category: 'music',
+    // Blathers doesn't take records. This flag is what keeps songs out of every
+    // museum total — see the museumItems computed in the collectibles store.
+    museum: false,
+    // No price field on purpose: every song is 3,200 to buy and 800 to sell, so
+    // the number tells you nothing. Where it comes from is the useful part.
+    source: source || null,
+    sourceNotes: notes || null,
+    mood: notes.match(MOOD_RE)?.[1] ?? null,
+    // A handful of songs never enter the Nook Shopping rotation — the only way
+    // to get them is to ask K.K. for them by name (or just show up).
+    nookShopping: /nook shopping/i.test(source),
+    seasonEvent: row['Season/Event'] && row['Season/Event'] !== 'NA' ? row['Season/Event'] : null,
+    versionAdded: row['Version Added'] || null,
+    iconUrl: row.Filename ? `${FURNITURE_ICON_CDN_BASE}/${row.Filename.trim()}.png` : null,
+  }
+}
+
 async function main() {
   const all = []
 
@@ -188,6 +233,11 @@ async function main() {
   const artwork = normalizeArtworkRows(artworkRows)
   console.log(`art: ${artwork.length} entries`)
   all.push(...artwork)
+
+  const musicRows = await fetchTabRows(MUSIC_GID)
+  const music = musicRows.map(normalizeMusicRow).filter(Boolean)
+  console.log(`music: ${music.length} entries`)
+  all.push(...music)
 
   all.sort((a, b) => a.category.localeCompare(b.category) || a.name.localeCompare(b.name))
 

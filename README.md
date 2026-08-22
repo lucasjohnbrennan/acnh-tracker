@@ -13,17 +13,22 @@ one question every time-traveling player actually has:
   the page, it scans all 12 months × 24 hours and surfaces the one moment
   where the most bugs, fish, and sea creatures are catchable — personalized
   to what you haven't caught yet once you're signed in.
-- **Covers all 316 collectibles** — the 200 critters (every bug, fish, and
-  sea creature, with price, location, and exactly which months and hours
+- **Covers all 316 museum collectibles** — the 200 critters (every bug, fish,
+  and sea creature, with price, location, and exactly which months and hours
   it's catchable in), plus 73 fossils and 43 artworks.
 - **Northern or Southern hemisphere**, your choice, remembered next time you
   visit.
-- **Search and filter** on two pages that match how the game splits things:
+- **Search and filter** on three pages that match how the game splits things:
   **Critters** for anything time-dependent (filter by category, month, and
-  hour range), **Fossils & Art** for the rest.
+  hour range), **Fossils & Art** for the rest of the museum, and **Music**
+  for K.K.'s discography.
 - **Spots Redd's forgeries.** Artwork that has a counterfeit gets a *Fake
   exists* badge — click it for exactly what the fake gets wrong and what the
   genuine looks like, so you don't hand Blathers a dud.
+- **Tracks all 107 K.K. Slider songs** on their own page, filtered by the
+  mood you pick before making a request — the one thing that actually steers
+  which song he plays. Records aren't museum exhibits, so they're counted
+  separately and never move your donation bar.
 - **Celebrates a complete museum.** Donate every critter, fossil, and
   artwork and the site throws confetti. You've earned it.
 - **Sign in with Google or email** to track your own collection — your
