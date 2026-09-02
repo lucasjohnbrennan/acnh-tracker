@@ -35,7 +35,7 @@ const breakdown = computed(() => {
 <template>
   <section class="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 dark:border-emerald-900 dark:bg-emerald-950/40">
     <p class="text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">
-      Best time to time-travel to
+      {{ best.count > 0 ? 'Best time to time-travel to' : 'All caught up' }}
     </p>
 
     <div v-if="best.count > 0" class="mt-2">
@@ -58,7 +58,7 @@ const breakdown = computed(() => {
       </button>
     </div>
     <p v-else class="mt-2 text-lg font-semibold text-stone-700 dark:text-stone-200">
-      You've caught everything catchable this year — nice work!
+      You've caught every critter — nice work!
     </p>
   </section>
 </template>
