@@ -18,10 +18,11 @@ one question every time-traveling player actually has:
   it's catchable in), plus 73 fossils and 43 artworks.
 - **Northern or Southern hemisphere**, your choice, remembered next time you
   visit.
-- **Search and filter** on three pages that match how the game splits things:
+- **Search and filter** on four pages that match how the game splits things:
   **Critters** for anything time-dependent (filter by category, month, and
-  hour range), **Fossils & Art** for the rest of the museum, and **Music**
-  for K.K.'s discography.
+  hour range), **Fossils** (search, or hide what you've donated), **Art**
+  (paintings vs statues, and whether Redd can forge it), and **Music** for
+  K.K.'s discography.
 - **Spots Redd's forgeries.** Artwork that has a counterfeit gets a *Fake
   exists* badge — click it for exactly what the fake gets wrong and what the
   genuine looks like, so you don't hand Blathers a dud.

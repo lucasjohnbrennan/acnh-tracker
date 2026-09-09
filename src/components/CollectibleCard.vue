@@ -6,6 +6,7 @@ import { useHemisphereStore } from '../stores/hemisphere'
 import { formatWindows, summarizeYearWindows, MONTH_NAMES } from '../lib/time'
 import artFakes from '../data/art-fakes.json'
 import { MOOD_ICONS } from '../lib/music'
+import { actionVerb, actionVerbTitle } from '../lib/terms'
 
 const FAKE_GUIDE_URL =
   'https://animalcrossingworld.com/guides/new-horizons/jolly-redds-art-real-genuine-vs-fake-forgery-cheat-sheet/'
@@ -29,16 +30,24 @@ const CATEGORY_META = {
   music: { icon: '🎵', label: 'Song' },
 }
 
-// Critters get caught, museum pieces get donated, and K.K.'s records just get
-// collected — nothing to hand to Blathers.
-const ACTION_VERBS = {
-  fossil: 'Donated',
-  art: 'Donated',
-  music: 'Collected',
-}
-
 const meta = computed(() => CATEGORY_META[props.collectible.category])
-const actionVerb = computed(() => ACTION_VERBS[props.collectible.category] ?? 'Caught')
+const isArt = computed(() => props.collectible.category === 'art')
+
+// "Art" is what the museum calls the wing; on the piece itself the useful word
+// is which half of it you're looking at — one hangs on a wall, one doesn't.
+const categoryLabel = computed(() =>
+  isArt.value ? (props.collectible.artType === 'statue' ? 'Statue' : 'Painting') : meta.value.label
+)
+const categoryIcon = computed(() =>
+  isArt.value && props.collectible.artType === 'statue' ? '🗿' : meta.value.icon
+)
+
+// Every fossil carries a group, but for the standalone ones (Amber, Ammonite)
+// the group is just the fossil's own name — "Amber set" tells you nothing.
+// It's only worth showing on the multi-piece dinosaurs.
+const showFossilGroup = computed(
+  () => Boolean(props.collectible.fossilGroup) && props.collectible.fossilGroup !== props.collectible.name
+)
 const imgFailed = ref(false)
 const isCaught = computed(() => collectiblesStore.caughtIds.has(props.collectible.id))
 
@@ -120,12 +129,12 @@ async function handleToggle() {
           v-else
           class="flex h-11 w-11 shrink-0 items-center justify-center text-2xl"
           aria-hidden="true"
-        >{{ meta.icon }}</span>
+        >{{ categoryIcon }}</span>
 
         <div>
           <p class="font-semibold text-stone-900 dark:text-white">{{ collectible.name }}</p>
           <p class="text-xs text-stone-500 dark:text-stone-400">
-            {{ meta.label }}<span v-if="collectible.location"> · {{ collectible.location }}</span><span v-if="collectible.fossilGroup"> · {{ collectible.fossilGroup }} set</span><span v-if="collectible.seasonEvent"> · {{ collectible.seasonEvent }}</span><span v-if="showPrice"> · {{ collectible.price.toLocaleString() }} bells</span><span v-if="collectible.shadowSize"> · Shadow: {{ collectible.shadowSize }}</span>
+            {{ categoryLabel }}<span v-if="collectible.location"> · {{ collectible.location }}</span><span v-if="showFossilGroup"> · {{ collectible.fossilGroup }} set</span><span v-if="collectible.seasonEvent"> · {{ collectible.seasonEvent }}</span><span v-if="showPrice"> · {{ collectible.price.toLocaleString() }} bells</span><span v-if="collectible.shadowSize"> · Shadow: {{ collectible.shadowSize }}</span>
           </p>
 
           <div v-if="collectible.hasFake" ref="fakeInfoRoot" class="relative mt-1">
@@ -181,9 +190,16 @@ async function handleToggle() {
         :title="authStore.user ? '' : 'Sign in to track your collection'"
         @click="handleToggle"
       >
-        {{ isCaught ? `${actionVerb} ✓` : `Mark ${actionVerb.toLowerCase()}` }}
+        {{ isCaught ? `${actionVerbTitle(collectible.category)} ✓` : `Mark ${actionVerb(collectible.category)}` }}
       </button>
     </div>
+
+    <p
+      v-if="isArt && collectible.realArtworkTitle"
+      class="text-xs italic text-stone-500 dark:text-stone-400"
+    >
+      {{ collectible.realArtworkTitle }}<span v-if="collectible.artist"> — {{ collectible.artist }}</span>
+    </p>
 
     <template v-if="isMusic">
       <div class="flex flex-wrap items-center gap-1.5">

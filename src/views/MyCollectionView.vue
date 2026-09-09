@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { useCollectiblesStore } from '../stores/collectibles'
 import CollectibleCard from '../components/CollectibleCard.vue'
+import { actionVerb } from '../lib/terms'
 
 const collectiblesStore = useCollectiblesStore()
 const showUncaught = ref(false)
@@ -30,6 +31,13 @@ const overallPercent = computed(() => {
 })
 
 const musicTotal = computed(() => collectiblesStore.musicItems.length)
+
+// Bugs get caught, fossils and art get donated — an empty wing should say so in
+// the words that fit it.
+function emptyText(category) {
+  const verb = actionVerb(category)
+  return showUncaught.value ? `You've ${verb} them all!` : `Nothing ${verb} yet.`
+}
 </script>
 
 <template>
@@ -54,9 +62,7 @@ const musicTotal = computed(() => collectiblesStore.musicItems.length)
       <div v-if="itemsFor(cat.value).length" class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <CollectibleCard v-for="c in itemsFor(cat.value)" :key="c.id" :collectible="c" />
       </div>
-      <p v-else class="text-sm text-stone-500 dark:text-stone-400">
-        {{ showUncaught ? "You've donated them all!" : 'Nothing donated yet.' }}
-      </p>
+      <p v-else class="text-sm text-stone-500 dark:text-stone-400">{{ emptyText(cat.value) }}</p>
     </section>
 
     <!-- Music sits below the museum sections and keeps its own tally: Blathers

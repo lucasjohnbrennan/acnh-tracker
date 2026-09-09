@@ -197,21 +197,35 @@ src/data/collectibles.json       master collectibles list (generated, committed)
 src/data/art-fakes.json          real-vs-fake tells for Redd's forgeries (hand-written)
 src/lib/time.js                  best-time-to-travel calculation (pure functions)
 src/lib/music.js                 K.K.'s five mood prompts + their emoji (shared)
+src/lib/terms.js                 the verb each category uses (caught/donated/collected)
 src/lib/firebase.js              Firebase app/auth/db init
 src/stores/                      Pinia stores: auth, hemisphere, collectibles,
-                                 critterFilters, artifactFilters, musicFilters
-src/views/                       HomeView, CrittersView, ArtifactsView, MusicView, LoginView,
-                                 MyCollectionView
+                                 critterFilters, fossilFilters, artFilters, musicFilters
+src/views/                       HomeView, CrittersView, FossilsView, ArtView, MusicView,
+                                 LoginView, MyCollectionView
 src/components/                  NavBar, HemisphereToggle, BestTimeBanner, CollectibleCard,
                                  MuseumCompleteCelebration
 ```
 
-Routes: `/` home, `/critters` time-dependent critters, `/artifacts` fossils
-and art, `/music` K.K. Slider's songs, `/collection` your collection
-(auth-gated), `/login`. `/browse` redirects to `/critters` — the Critters page was called Browse until it
-picked up a name that says what it lists, and old links still work.
+Routes: `/` home, `/critters` time-dependent critters, `/fossils` fossils,
+`/art` artwork, `/music` K.K. Slider's songs, `/collection` your collection
+(auth-gated), `/login`. Two redirects keep old links working: `/browse` goes to
+`/critters` (that page was called Browse until it picked up a name that says
+what it lists), and `/artifacts` goes to `/fossils` (fossils and art shared one
+page before they got filters of their own).
 
-The three filter stores exist so search/category/month/hour/mood selections
+Fossils and art are separate pages because they filter on nothing in common: a
+fossil is only ever "do I still owe Blathers this one?", while artwork splits
+into paintings vs statues and into pieces Redd can forge vs pieces he can't.
+`artType` on each art entry is derived in the fetch script from the game's own
+asset naming (`FtrSculpture…` vs `FtrArt…`).
+
+Each category also has its own verb — critters are **caught**, fossils and art
+are **donated**, songs are **collected** — which is what `src/lib/terms.js`
+centralizes so the card button, the "hide" checkbox and the My Collection empty
+states never disagree.
+
+The four filter stores exist so search/category/month/hour/mood selections
 survive navigating away and back. They're also how the home page's best-time banner
 deep-links into Critters: it sets the month and hour range, then pushes the
 route.

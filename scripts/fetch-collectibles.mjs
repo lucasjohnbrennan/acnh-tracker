@@ -137,6 +137,16 @@ function normalizeFossilRow(row) {
   }
 }
 
+// Paintings hang on the wall, statues sit on the floor — the two halves of the
+// art wing, and the split the Art page filters on. The game's own asset names
+// are the authority (FtrSculpture… vs FtrArt…); the piece's name is the
+// fallback for anything missing a filename.
+function artType(row) {
+  const filename = (row.Filename || '').trim()
+  if (filename) return filename.startsWith('FtrSculpture') ? 'statue' : 'painting'
+  return /\bstatue\b/i.test(row.Name || '') ? 'statue' : 'painting'
+}
+
 // The Artwork tab has two rows per piece when a counterfeit exists (a
 // "Genuine: Yes" row and a "Genuine: No" row with the same Name). We only
 // want the real one to show up as a trackable collectible — the fake isn't
@@ -161,6 +171,7 @@ function normalizeArtworkRows(rows) {
       id: `art-${slugify(name)}`,
       name: titleCase(name),
       category: 'art',
+      artType: artType(genuine),
       price: toNumber(genuine.Sell),
       hasFake,
       realArtworkTitle: genuine['Real Artwork Title'] || null,
