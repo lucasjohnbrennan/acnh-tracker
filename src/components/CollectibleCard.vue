@@ -67,6 +67,15 @@ const musicSourceLabel = computed(() =>
 
 // How to tell this piece's forgery from the genuine article, if we have it.
 const fakeTell = computed(() => artFakes[props.collectible.id] ?? null)
+
+// The guide gives every piece its own section, anchored on the slug of its
+// name — which is exactly our id with the `art-` prefix stripped, since both
+// slugify the same name (checked against the live page: all 43 pieces match).
+// If they ever rename an anchor the link just lands at the top of the guide,
+// which is where it used to land for everything anyway.
+const fakeGuideUrl = computed(
+  () => `${FAKE_GUIDE_URL}#${props.collectible.id.replace(/^art-/, '')}`
+)
 const showFakeInfo = ref(false)
 const fakeInfoRoot = ref(null)
 
@@ -168,12 +177,12 @@ async function handleToggle() {
                 A counterfeit of this piece exists at Redd's — compare it carefully before buying.
               </p>
               <a
-                :href="FAKE_GUIDE_URL"
+                :href="fakeGuideUrl"
                 target="_blank"
                 rel="noopener noreferrer"
                 class="mt-2 inline-block text-stone-500 underline hover:text-emerald-700 dark:text-stone-400 dark:hover:text-emerald-400"
               >
-                Side-by-side pictures ↗
+                Side-by-side pictures of this piece ↗
               </a>
             </div>
           </div>
