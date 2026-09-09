@@ -29,6 +29,10 @@ const caughtByCategory = computed(() => {
 })
 
 const musicTotal = computed(() => collectiblesStore.musicItems.length)
+const musicCollected = computed(() => collectiblesStore.musicCaughtCount)
+const musicPercent = computed(() =>
+  musicTotal.value === 0 ? 0 : Math.round((musicCollected.value / musicTotal.value) * 100)
+)
 </script>
 
 <template>
@@ -49,7 +53,30 @@ const musicTotal = computed(() => collectiblesStore.musicItems.length)
       </div>
     </section>
 
-    <section v-else class="rounded-xl border border-dashed border-stone-300 p-6 text-center text-stone-600 dark:border-stone-700 dark:text-stone-300">
+    <!-- Music sits outside the tile grid on purpose: those five are the museum
+         wings, and a record is the one thing you collect that Blathers won't
+         take. Its own box (and its own colour) keeps that line visible. -->
+    <section
+      v-if="authStore.user"
+      class="rounded-xl border border-stone-200 bg-white p-4 dark:border-stone-800 dark:bg-stone-900"
+    >
+      <div class="flex flex-wrap items-baseline justify-between gap-2">
+        <p class="font-medium text-stone-900 dark:text-white">
+          🎵 {{ musicCollected }} / {{ musicTotal }} songs collected ({{ musicPercent }}%)
+        </p>
+        <p class="text-xs text-stone-500 dark:text-stone-400">
+          Tracked separately — records aren't museum exhibits.
+        </p>
+      </div>
+      <div class="mt-2 h-2 w-full overflow-hidden rounded-full bg-stone-200 dark:bg-stone-800">
+        <div class="h-full bg-sky-500" :style="{ width: musicPercent + '%' }" />
+      </div>
+    </section>
+
+    <!-- Not v-else: the music box now sits between this and the tiles, so the
+         condition is spelled out rather than left to pair with whatever
+         happens to precede it. -->
+    <section v-if="!authStore.user" class="rounded-xl border border-dashed border-stone-300 p-6 text-center text-stone-600 dark:border-stone-700 dark:text-stone-300">
       <p>
         <router-link to="/login" class="font-medium text-emerald-700 underline dark:text-emerald-400">Sign in</router-link>
         to track all {{ collectiblesStore.museumItems.length }} museum collectibles — every bug, fish,
@@ -57,12 +84,5 @@ const musicTotal = computed(() => collectiblesStore.musicItems.length)
         museum fill up.
       </p>
     </section>
-
-    <router-link
-      to="/critters"
-      class="inline-block w-fit rounded-md bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700 dark:bg-white dark:text-stone-900 dark:hover:bg-stone-200"
-    >
-      Browse all critters →
-    </router-link>
   </div>
 </template>
