@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { useCollectiblesStore } from '../stores/collectibles'
 import { useAuthStore } from '../stores/auth'
 import { useHemisphereStore } from '../stores/hemisphere'
@@ -78,6 +78,35 @@ const fakeGuideUrl = computed(
 )
 const showFakeInfo = ref(false)
 const fakeInfoRoot = ref(null)
+const fakeInfoPanel = ref(null)
+// The panel normally hangs below the badge, but the last cards on a page have
+// no room down there — on a phone it ran off the bottom of the screen. When
+// below doesn't fit and above does, flip it.
+const fakeInfoAbove = ref(false)
+
+// Matches the mt-1.5/mb-1.5 gap between badge and panel.
+const PANEL_GAP = 6
+
+async function toggleFakeInfo() {
+  if (showFakeInfo.value) {
+    showFakeInfo.value = false
+    return
+  }
+  // Open downwards first so the panel is in the DOM to be measured.
+  fakeInfoAbove.value = false
+  showFakeInfo.value = true
+  await nextTick()
+
+  const badge = fakeInfoRoot.value?.getBoundingClientRect()
+  const panel = fakeInfoPanel.value?.getBoundingClientRect()
+  if (!badge || !panel) return
+
+  const spaceBelow = window.innerHeight - badge.bottom
+  const needed = panel.height + PANEL_GAP
+  // Only flip if above is actually roomier — on a short screen where neither
+  // side fits, dropping down keeps the first line (the tell) visible.
+  fakeInfoAbove.value = spaceBelow < needed && badge.top > spaceBelow
+}
 
 function closeOnOutsideClick(event) {
   if (fakeInfoRoot.value && !fakeInfoRoot.value.contains(event.target)) showFakeInfo.value = false
@@ -152,14 +181,16 @@ async function handleToggle() {
               class="inline-flex w-fit items-center gap-1 whitespace-nowrap rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 transition-colors hover:bg-amber-200 dark:bg-amber-900/40 dark:text-amber-300 dark:hover:bg-amber-900/70"
               :aria-expanded="showFakeInfo"
               title="A counterfeit version of this exists at Redd's — tap to see how to spot it."
-              @click="showFakeInfo = !showFakeInfo"
+              @click="toggleFakeInfo"
             >
               ⚠️ Fake exists
             </button>
 
             <div
               v-if="showFakeInfo"
-              class="absolute left-0 top-full z-20 mt-1.5 w-64 rounded-lg border border-stone-200 bg-white p-3 text-xs shadow-lg dark:border-stone-700 dark:bg-stone-800"
+              ref="fakeInfoPanel"
+              class="absolute left-0 z-20 w-64 rounded-lg border border-stone-200 bg-white p-3 text-xs shadow-lg dark:border-stone-700 dark:bg-stone-800"
+              :class="fakeInfoAbove ? 'bottom-full mb-1.5' : 'top-full mt-1.5'"
             >
               <p class="font-semibold text-stone-900 dark:text-white">Spotting the forgery</p>
               <template v-if="fakeTell">
