@@ -21,16 +21,70 @@ message pointing you here) until you configure Firebase — see below.
 3. **Build > Firestore Database > Create database** (production mode is fine — the rules below lock it down).
 4. Deploy [`firestore.rules`](firestore.rules) from the Firestore **Rules** tab in the console (or via `firebase deploy --only firestore:rules` if you use the Firebase CLI). It restricts each user to reading/writing only their own document.
 5. **Project settings > General > Your apps** → add a Web app, copy the config values.
-6. Copy `.env.example` to `.env` and fill in those values:
+6. *(Optional, for traffic stats)* **Project settings > Integrations > Google
+   Analytics** → enable it, then re-copy the config from step 5 — it now
+   includes a `measurementId` (`G-XXXXXXXXXX`).
+7. Create `.env` in the project root and fill in those values:
 
 ```bash
-cp .env.example .env
+cat > .env <<'EOF'
+VITE_FIREBASE_API_KEY=
+VITE_FIREBASE_AUTH_DOMAIN=
+VITE_FIREBASE_PROJECT_ID=
+VITE_FIREBASE_STORAGE_BUCKET=
+VITE_FIREBASE_MESSAGING_SENDER_ID=
+VITE_FIREBASE_APP_ID=
+# Only if you enabled Analytics in step 6.
+VITE_FIREBASE_MEASUREMENT_ID=
+EOF
 ```
 
 Restart `npm run dev` after creating/editing `.env` (Vite only reads it at server start).
 
 Each signed-in user's caught collectibles are stored at `users/{uid}` as a
 `caughtIds` string array, kept in sync live via a Firestore listener.
+
+## Analytics
+
+Firebase Analytics (Google Analytics 4) is opt-in twice over: it does nothing
+unless `VITE_FIREBASE_MEASUREMENT_ID` is set *and* the visitor accepts the
+consent banner. With no measurement ID there is no banner, no SDK and no
+cookies at all, so leaving it out of your local `.env` keeps dev traffic out of
+the reports.
+
+Three pieces:
+
+- [`src/lib/analytics.js`](src/lib/analytics.js) owns consent and initializes
+  the SDK lazily. Loading the SDK is what pulls in `gtag.js` and sets cookies,
+  so it is never touched until consent exists. The choice lives in
+  `localStorage` under `acnh-tracker:analytics-consent`.
+- [`src/components/AnalyticsConsent.vue`](src/components/AnalyticsConsent.vue)
+  is the banner. Both buttons share one style deliberately — declining has to
+  be as easy as accepting, so neither gets the emerald "primary" treatment used
+  elsewhere.
+- A footer in [`src/App.vue`](src/App.vue) shows the current setting and
+  reopens the banner, since withdrawal has to stay as easy as consenting.
+
+Page views are logged by hand from a `router.afterEach` hook in
+[`src/router/index.js`](src/router/index.js), with the SDK's automatic
+`page_view` turned off via `send_page_view: false`. The automatic one fires
+only on the initial document load, which in an SPA would report every visit as
+a single hit on whatever page the visitor entered on. Reports use the route
+name (`critters`, `music`, …) as the page title, since every route shares one
+`<title>`. A view that happens before the banner is answered is held and
+replayed on accept, so consenting counts the page they're actually on.
+
+Declining after having accepted calls `setAnalyticsCollectionEnabled(false)`
+(GA's own kill switch) and clears the `_ga*` cookies. Cookie clearing only
+reaches cookies scoped to this exact host, which covers the GitHub Pages setup.
+
+Data shows up under **Realtime** in the Firebase console within a minute or
+two; the aggregated **Analytics dashboard** reports lag by roughly a day.
+Expect the numbers to undercount by however many visitors decline.
+
+This is the standard opt-in consent flow for GDPR/ePrivacy, but it is not legal
+advice, and there is no privacy policy page in the app — worth adding one if
+the site ever collects more than page views.
 
 ## Deploying to GitHub Pages (free)
 
@@ -43,8 +97,9 @@ every push to `main` builds the app and publishes it to
    each value in your `.env` file (`VITE_FIREBASE_API_KEY`,
    `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`,
    `VITE_FIREBASE_STORAGE_BUCKET`, `VITE_FIREBASE_MESSAGING_SENDER_ID`,
-   `VITE_FIREBASE_APP_ID`) — the workflow injects them at build time since
-   `.env` itself isn't committed.
+   `VITE_FIREBASE_APP_ID`, and `VITE_FIREBASE_MEASUREMENT_ID` if you want
+   analytics) — the workflow injects them at build time since `.env` itself
+   isn't committed.
 3. In the Firebase console, **Authentication > Settings > Authorized domains**
    → add `<your-username>.github.io` (required for sign-in to work once the
    site isn't on `localhost`).
@@ -199,12 +254,13 @@ src/lib/time.js                  best-time-to-travel calculation (pure functions
 src/lib/music.js                 K.K.'s five mood prompts + their emoji (shared)
 src/lib/terms.js                 the verb each category uses (caught/donated/collected)
 src/lib/firebase.js              Firebase app/auth/db init
+src/lib/analytics.js             Consent-gated Google Analytics
 src/stores/                      Pinia stores: auth, hemisphere, collectibles,
                                  critterFilters, fossilFilters, artFilters, musicFilters
 src/views/                       HomeView, CrittersView, FossilsView, ArtView, MusicView,
                                  LoginView, MyCollectionView
 src/components/                  NavBar, HemisphereToggle, BestTimeBanner, CollectibleCard,
-                                 MuseumCompleteCelebration
+                                 MuseumCompleteCelebration, AnalyticsConsent
 ```
 
 Routes: `/` home, `/critters` time-dependent critters, `/fossils` fossils,

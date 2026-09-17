@@ -9,6 +9,7 @@ const firebaseConfig = {
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 }
 
 // Lets the app run (browsing, best-time calculator) before Firebase is set up —
@@ -18,3 +19,7 @@ export const firebaseConfigured = Boolean(firebaseConfig.apiKey && firebaseConfi
 export const firebaseApp = firebaseConfigured ? initializeApp(firebaseConfig) : null
 export const auth = firebaseConfigured ? getAuth(firebaseApp) : null
 export const db = firebaseConfigured ? getFirestore(firebaseApp) : null
+
+// Read by lib/analytics.js, which owns everything measurement-related —
+// nothing analytics is set up here, because none of it may run before consent.
+export const measurementId = firebaseConfig.measurementId

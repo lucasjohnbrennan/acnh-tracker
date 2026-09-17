@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { logAnalyticsEvent } from '../lib/analytics'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -32,6 +33,17 @@ router.beforeEach(async (to) => {
     return { name: 'login', query: { redirect: to.fullPath } }
   }
   return true
+})
+
+// Runs for the initial load as well as every client-side navigation, and only
+// after redirects have resolved — so /browse reports as the critters page.
+// Every route shares one <title>, so the route name is the useful page label.
+router.afterEach((to) => {
+  logAnalyticsEvent('page_view', {
+    page_path: to.fullPath,
+    page_title: typeof to.name === 'string' ? to.name : to.fullPath,
+    page_location: window.location.href,
+  })
 })
 
 export default router
